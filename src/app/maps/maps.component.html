@@ -1,0 +1,80 @@
+<section id="main-content">
+   <mat-sidenav-container>
+
+    <mat-sidenav mode="side" position="end" #sidenav id="sidenav" class="mat-elevation-z4">
+      <form [formGroup]="MapOptions" class="p-2">
+        <mat-form-field appearance="outline" cdkDrag>
+          <mat-label>Address</mat-label>
+          <input matInput type="text" id="address" placeholder="International House Nairobi Kenya" />
+          <mat-icon matPrefix class="material-icons">place</mat-icon>
+        </mat-form-field>
+        <br />
+
+        <mat-icon classs="material-icons text-ks">streetview</mat-icon>
+        <mat-checkbox formControlName="activateStreetView" [(ngModel)]="isStreetViewEnabled" color="primary" (click)="setStreetViewOptions()">Activate Street View</mat-checkbox>
+        <br />
+        <mat-divider></mat-divider>
+
+        <mat-icon classs="material-icons text-ks">gesture</mat-icon>
+        <mat-checkbox formControlName="activateDrawingMode" [(ngModel)]="isDrawingModeEnabled" color="primary" (click)="setDrawingModeOptions()">Activate Drawing Mode</mat-checkbox>
+
+
+        <mat-divider></mat-divider>
+
+        <mat-label>Change Map Type</mat-label>
+        <mat-select matNativeControl formControlName="getMapType" required >
+          <mat-hint>
+            ---Map Type---
+          </mat-hint>
+          <mat-option *ngFor="let option of MapTypes" [value]="option" (click)="getMapType()"><h3 class="text-ks">{{ option | uppercase }}</h3></mat-option>
+        </mat-select>
+
+        <small class="text-ks">Current Map Type</small>
+        <button mat-stroked-button color="secondary">{{ enabledMapType }}</button>
+
+
+        <mat-divider></mat-divider>
+
+          <mat-label>Select Travel Mode</mat-label>
+          <mat-select matNativeControl formControlName="travelMode" required >
+            <mat-hint>
+              ---Travel Mode---
+            </mat-hint>
+            <mat-option *ngFor="let option of TravelModes" [value]="option" (click)="getTravelMode()"><h3 class="text-ks">{{ option | uppercase }}</h3></mat-option>
+          </mat-select>
+
+          <small class="text-ks">Enabled Travel Mode</small>
+          <button mat-stroked-button color="secondary">{{ enabledTravelMode }}</button>
+
+          <mat-divider></mat-divider>
+
+          <mat-checkbox formControlName="activateRouteAnimation" [(ngModel)]="routeAnimation" color="primary" (click)="animateRoute()">Animate Route</mat-checkbox>
+      </form>
+
+      <mat-divider></mat-divider>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <mat-card id="mapRenderer" cdkDrag class="mat-elevation-z8 h-100"></mat-card>
+      <footer id="iconsContainer" #iconsContainer>
+        <button mat-mini-fab color="secondary" id="myLocation" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">my_location</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="showTraffic" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">traffic</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="renderIn3D" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">3d_rotation</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="zoomIn" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">zoom_in_map</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="zoomOut" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">zoom_out_map</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="rotateLeft" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">autorenew</mat-icon></button>
+
+        <button mat-mini-fab color="secondary" id="rotateRight" [style.visibility]="StreetViewVisibility"><mat-icon class="material-icons">sync</mat-icon></button>
+
+      </footer>
+      <mat-card id="map-info" class="bordered" cdkDrag [style.visibility]="directionsVisibility"></mat-card>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+  <button class="mat-elevation-z8" id="sidenavToggleButton" mat-icon-button (click)="sidenav.toggle()"><mat-icon class=?material-icons>open_in_full</mat-icon></button>
+
+</section>
