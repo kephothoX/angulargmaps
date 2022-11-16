@@ -73,7 +73,6 @@
             },
             "development": {
               "browserTarget": "KephothoMaps:build:development",
-              "proxyConfig": "src/proxy.conf.json",
               "ssl": true,
               "sslCert": "src/assets/certs/certificate.crt",
               "sslKey": "src/assets/certs/privateKey.key"
