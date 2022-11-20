@@ -71,7 +71,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
     });
   }
 
-  API_KEY: string = /*API KEY*/;
+  API_KEY: string =  'YOUR API KEY';
 
   MapChoice: string = '';
 
@@ -186,10 +186,26 @@ export class MapsComponent implements OnInit, AfterViewInit {
 
       let polyLocs = new Array();
       let plotLocs = new Array();
+      let plotPoints = new Array();
 
       const infoContainer = document.getElementById('map-info');
       const mapCardContentElem = document.createElement('mat-card-content');
       infoContainer?.appendChild(mapCardContentElem);
+
+      let travelModeElem = document.createElement('button');
+      travelModeElem.setAttribute('class', 'mat-stroked-button text-dark');
+
+      let travelModeIcon = document.createElement('mat-icon');
+      travelModeIcon.setAttribute('class', 'material-icons');
+      travelModeIcon.innerText = 'mode_of_travel';
+      travelModeElem.appendChild(travelModeIcon);
+
+      mapCardContentElem.appendChild(travelModeElem);
+
+      let distanceElem = document.createElement('button');
+      distanceElem.setAttribute('class', 'mat-stroked-button text-warn');
+      mapCardContentElem.appendChild(distanceElem);
+
 
       let svgMarker = {
         path: "M10.453 14.016l6.563-6.609-1.406-1.406-5.156 5.203-2.063-2.109-1.406 1.406zM12 2.016q2.906 0 4.945 2.039t2.039 4.945q0 1.453-0.727 3.328t-1.758 3.516-2.039 3.070-1.711 2.273l-0.75 0.797q-0.281-0.328-0.75-0.867t-1.688-2.156-2.133-3.141-1.664-3.445-0.75-3.375q0-2.906 2.039-4.945t4.945-2.039z",
@@ -219,21 +235,21 @@ export class MapsComponent implements OnInit, AfterViewInit {
         }
       );
 
-     function  animateCircle(line: google.maps.Polyline) {
-      if(Boolean(ls.get('AnimateRoute', { decrypt: true })) == true) {
-      let count = 0;
+      function  animateCircle(line: google.maps.Polyline) {
+        if(Boolean(ls.get('AnimateRoute', { decrypt: true })) == true) {
+          let count = 0;
 
-      window.setInterval(() => {
-        count = (count + 1) % 200;
-        const icons = line.get("icons");
+          window.setInterval(() => {
+            count = (count + 1) % 200;
+            const icons = line.get("icons");
 
-        icons[0].offset = count / 2 + "%";
-        line.set("icons", icons);
-      }, 200);
-    } else {
-      return;
-    }
-  }
+            icons[0].offset = count / 2 + "%";
+            line.set("icons", icons);
+          }, 200);
+        } else {
+          return;
+        }
+      }
 
       function getTravelMode(): google.maps.TravelMode {
         if(ls.get('TravelMode', { decrypt: true }) == 'DRIVING') {
@@ -248,6 +264,89 @@ export class MapsComponent implements OnInit, AfterViewInit {
           return google.maps.TravelMode.DRIVING;
         }
 
+      }
+
+
+      function showSteps(
+        directionResult: google.maps.DirectionsResult,
+        markerArray: google.maps.Marker[],
+        stepDisplay: google.maps.InfoWindow,
+        map: google.maps.Map
+      ) {
+        // For each step, place a marker, and add the text to the marker's infowindow.
+        // Also attach the marker to an array so we can keep track of it and remove it
+        // when calculating new routes.
+        const myRoute = directionResult!.routes[0]!.legs[0]!;
+
+        distanceElem.innerText = `Total Distance:  ${ directionResult!.routes[0]!.legs[0]!.distance!.text }`;
+        travelModeElem.innerText = `Travel Mode:  ${ getTravelMode() }`;
+
+        let matListElem = document.createElement('mat-list');
+        matListElem.setAttribute('class', 'bordered');
+        matListElem.setAttribute('class', 'bg-whiter');
+        mapCardContentElem.appendChild(matListElem);
+
+        for (let i = 0; i < myRoute.steps.length; i++) {
+          const marker = (markerArray[i] =
+          markerArray[i] || new google.maps.Marker());
+
+          marker.setMap(map);
+          marker.setPosition(myRoute.steps[i].start_location);
+
+          if (matListElem) {
+            let matListItemElem = document.createElement('mat-list-item');
+            matListItemElem.setAttribute('class', 'align-left');
+
+            let h5Elem = document.createElement('h5');
+            h5Elem.setAttribute('class', 'text-ks');
+            h5Elem.innerText = `Distance: ${myRoute.steps[i].distance!.text}  Duration: ${myRoute.steps[i].duration!.text}`;
+            matListItemElem.appendChild(h5Elem);
+
+            let h3Elem = document.createElement('h3');
+            h3Elem.setAttribute('class', 'text-dark');
+            h3Elem.innerHTML = `${myRoute.steps[i].instructions}`;
+            matListItemElem.appendChild(h3Elem);
+            matListElem.appendChild(matListItemElem);
+          }
+
+          attachInstructionText(
+            stepDisplay,
+            marker,
+            myRoute.steps[i].instructions,
+            map
+          );
+        }
+      }
+
+      function attachInstructionText(
+        stepDisplay: google.maps.InfoWindow,
+        marker: google.maps.Marker,
+        text: string,
+        map: google.maps.Map
+      ) {
+        google.maps.event.addListener(marker, "click", () => {
+          // Open an info window when the marker is clicked on, containing the text
+          // of the step.
+          let matListElem = document.createElement('mat-list');
+          matListElem.setAttribute('class', 'bordered');
+          matListElem.setAttribute('class', 'bg-whiter');
+          mapCardContentElem.appendChild(matListElem);
+
+          if (matListElem) {
+            let matListItemElem = document.createElement('mat-list-item');
+            matListItemElem.setAttribute('class', 'align-left');
+
+            let h3Elem = document.createElement('h3');
+            h3Elem.setAttribute('class', 'text-dark');
+            h3Elem.innerHTML = `${text}`;
+            matListItemElem.appendChild(h3Elem);
+            matListElem.appendChild(matListItemElem);
+
+          }
+
+          stepDisplay.setContent(text);
+          stepDisplay.open(map, marker);
+        });
       }
 
       const mapZoomIn = document.getElementById('zoomIn');
@@ -323,6 +422,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
             ls.set('Location', { lat: crd.latitude, lng: crd.longitude }, { encrypt: true });
 
             map.setCenter({ lat: crd.latitude, lng: crd.longitude });
+            window.location.reload();
           });
         });
       }
@@ -463,6 +563,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
 
 
       if(this.isDrawingModeEnabled == true) {
+        this.directionsVisibility = 'visible';
         let drawingManager = new google.maps.drawing.DrawingManager({
           drawingMode: google.maps.drawing.OverlayType.POLYLINE,
           drawingControl: true,
@@ -471,7 +572,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
           drawingModes: [ google.maps.drawing.OverlayType.POLYLINE ]
         },
         polylineOptions: {
-          strokeColor: '#00aabb',
+          strokeColor: '#e42301',
           strokeWeight: 10,
           strokeOpacity: 0.5,
            icons: [
@@ -498,12 +599,56 @@ export class MapsComponent implements OnInit, AfterViewInit {
           placeIdArray = [];
           for (let i = 0; i < data.snappedPoints.length; i++) {
             let latlng = new google.maps.LatLng(
-              data.snappedPoints[i].location.latitude,
-              data.snappedPoints[i].location.longitude);
-              snappedCoordinates.push(latlng);
-              plotLocs.push({ lat: latlng.lat(), lng: latlng.lng() });
+            data.snappedPoints[i].location.latitude,
+            data.snappedPoints[i].location.longitude);
+            snappedCoordinates.push(latlng);
+            plotLocs.push({ lat: latlng.lat(), lng: latlng.lng() });
 
-              placeIdArray.push(data.snappedPoints[i].placeId);
+            plotPoints.push({ location: { lat: latlng.lat(), lng: latlng.lng() }});
+
+            placeIdArray.push(data.snappedPoints[i].placeId);
+
+          }
+
+          calculateAndDisplayRoute(
+            directionsRenderer,
+            directionsService,
+            markerArray,
+            stepDisplay,
+            map
+          );
+
+
+          function calculateAndDisplayRoute(
+            directionsRenderer: google.maps.DirectionsRenderer,
+            directionsService: google.maps.DirectionsService,
+            markerArray: google.maps.Marker[],
+            stepDisplay: google.maps.InfoWindow,
+            map: google.maps.Map
+          ) {
+            // First, remove any existing markers from the map.
+            for (let i = 0; i < markerArray.length; i++) {
+              markerArray[i].setMap(null);
+            }
+
+            directionsService
+            .route({
+              origin: new google.maps.LatLng(plotLocs[0]),
+              destination: new google.maps.LatLng(plotLocs[plotLocs.length-1]),
+
+              //Waypoint disabled as they will always or rather most probably exceed the set max of 74.
+              // waypoints: plotPoints,
+              //optimizeWaypoints: true,
+              travelMode: getTravelMode(),
+            })
+            .then((response) => {
+              directionsRenderer.setDirections(response);
+
+              showSteps(response, markerArray, stepDisplay, map);
+            })
+            .catch((e) => {
+              window.alert("Directions request failed due to " + e);
+            });
           }
         }
 
@@ -511,7 +656,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
         function drawSnappedPolyline() {
           let snappedPolyline = new google.maps.Polyline({
             path: snappedCoordinates,
-            strokeColor: '#0c00bb',
+            strokeColor: '#e42301',
             strokeWeight: 5,
             strokeOpacity: 0.9,
             icons: [
@@ -542,6 +687,8 @@ export class MapsComponent implements OnInit, AfterViewInit {
             processSnapToRoadResponse(data);
             drawSnappedPolyline();
           });
+
+
         }
       } else {
         let drawingManager = new google.maps.drawing.DrawingManager({
@@ -600,7 +747,7 @@ export class MapsComponent implements OnInit, AfterViewInit {
               function drawSnappedPolyline() {
                 let snappedPolyline = new google.maps.Polyline({
                   path: plotLocs,
-                  strokeColor: '#0c00bb',
+                  strokeColor: '#e42301',
                   strokeWeight: 5,
                   strokeOpacity: 0.9,
                   icons: [
@@ -642,136 +789,17 @@ export class MapsComponent implements OnInit, AfterViewInit {
                   processSnapToRoadResponse(result);
                   drawSnappedPolyline();
 
+                  console.log('Directions Response: ', result);
+
                   // Route the directions and pass the response to a function to create
                   // markers for each step.
 
                   directionsRenderer.setDirections(result);
-
-                  const route = result.routes[0];
-
-                  const summaryPanel = document.createElement('mat-card-subtitle');
-                  infoContainer?.appendChild(summaryPanel);
-
-                  let warnings = document.createElement('mat-card-actions');
-                  warnings.innerHTML = `${result.routes[0].warnings}`;
-                  mapCardContentElem.appendChild(warnings);
-
-                  summaryPanel.innerHTML = "";
-
-
-                  // For each route, display summary information.
-                  for (let i = 0; i < route.legs.length; i++) {
-                    const routeSegment = i + 1;
-
-                    //polyLocs.push({ lat: route.legs[i].start_location.lat(), lng: route.legs[i].start_location.lng() });
-                    //polyLocs.push({ lat: route.legs[i].end_location.lat(), lng: route.legs[i].end_location.lng() });
-
-                    let h3Elem = document.createElement('h3');
-                    h3Elem.classList.add('text-warn');
-                    h3Elem.innerText = `Route Segment:  ${ routeSegment } From: ${ route.legs[i].start_address } To: ${ route.legs[i].end_address }`;
-
-                    let listHolderElem = document.createElement('ul');
-                    //let listElem = document.createElement('li');
-                    //listHolderElem.appendChild(listElem);
-                    mapCardContentElem.appendChild(listHolderElem);
-
-
-                    let disElem = document.createElement('button');
-                    disElem.classList.add('mat-stroked-button');
-                    disElem.setAttribute('color', 'warn');
-
-                    disElem.innerText = `${ route.legs[i].distance!.text }`;
-
-                    summaryPanel.appendChild(h3Elem);
-                    summaryPanel.appendChild(disElem);
-                  }
                   showSteps(result, markerArray, stepDisplay, map);
                 })
                 .catch((e) => {
                   window.alert("Directions request failed due to " + e);
                 });
-
-
-                function showSteps(
-                  directionResult: google.maps.DirectionsResult,
-                  markerArray: google.maps.Marker[],
-                  stepDisplay: google.maps.InfoWindow,
-                  map: google.maps.Map
-                ) {
-                  // For each step, place a marker, and add the text to the marker's infowindow.
-                  // Also attach the marker to an array so we can keep track of it and remove it
-                  // when calculating new routes.
-                  const myRoute = directionResult!.routes[0]!.legs[0]!;
-
-                  let matListElem = document.createElement('mat-list');
-                  matListElem.setAttribute('class', 'bordered');
-                  matListElem.setAttribute('class', 'bg-whiter');
-                  mapCardContentElem.appendChild(matListElem);
-
-                  for (let i = 0; i < myRoute.steps.length; i++) {
-                    const marker = (markerArray[i] =
-                    markerArray[i] || new google.maps.Marker());
-
-                    marker.setMap(map);
-                    marker.setPosition(myRoute.steps[i].start_location);
-
-
-
-                    if (matListElem) {
-                      let matListItemElem = document.createElement('mat-list-item');
-                      matListItemElem.setAttribute('class', 'align-left');
-
-                      let h5Elem = document.createElement('h5');
-                      h5Elem.setAttribute('class', 'text-warn');
-                      h5Elem.innerText = `Distance: ${myRoute.steps[i].distance!.text}  Duration: ${myRoute.steps[i].duration!.text}`;
-                      matListItemElem.appendChild(h5Elem);
-
-                      let h3Elem = document.createElement('h3');
-                      h3Elem.setAttribute('class', 'text-dark');
-                      h3Elem.innerHTML = `${myRoute.steps[i].instructions}`;
-                      matListItemElem.appendChild(h3Elem);
-                      matListElem.appendChild(matListItemElem);
-
-                    }
-                    attachInstructionText(
-                      stepDisplay,
-                      marker,
-                      myRoute.steps[i].instructions,
-                      map
-                    );
-                  }
-                }
-
-                function attachInstructionText(
-                  stepDisplay: google.maps.InfoWindow,
-                  marker: google.maps.Marker,
-                  text: string,
-                  map: google.maps.Map
-                ) {
-                  google.maps.event.addListener(marker, "click", () => {
-                    // Open an info window when the marker is clicked on, containing the text
-                    // of the step.
-                    let matListElem = document.createElement('mat-list');
-                    matListElem.setAttribute('class', 'bordered');
-                    matListElem.setAttribute('class', 'bg-whiter');
-                    mapCardContentElem.appendChild(matListElem);
-
-                    if (matListElem) {
-                      let matListItemElem = document.createElement('mat-list-item');
-                      matListItemElem.setAttribute('class', 'align-left');
-
-                      let h3Elem = document.createElement('h3');
-                      h3Elem.setAttribute('class', 'text-dark');
-                      h3Elem.innerHTML = `${text}`;
-                      matListItemElem.appendChild(h3Elem);
-                      matListElem.appendChild(matListItemElem);
-
-                    }
-
-                    stepDisplay.setContent(text);
-                    stepDisplay.open(map, marker);
-                  });
-                }
               }
             }
           }
@@ -779,7 +807,6 @@ export class MapsComponent implements OnInit, AfterViewInit {
       });
     });
   }
-
 }
 
 
